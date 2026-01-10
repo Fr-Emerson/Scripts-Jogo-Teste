@@ -4,8 +4,9 @@ namespace Map
 {
     public static class MeshGenerator
     {
-        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve heightCurve, int levelOfDetail)
+        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail)
         {
+            AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
             int width = heightmap.GetLength(0);
             int height = heightmap.GetLength(1);
             
@@ -22,7 +23,10 @@ namespace Map
             {
                 for (int x = 0; x < width; x+= simplificationIncrement)
                 {
-                    meshData.vertices[vertexIndex] = new Vector3(topLeftX+x, heightCurve.Evaluate(heightmap[x, y])* heightMultiplier, topLeftZ - y);
+                    lock (heightCurve)
+                    {
+                       meshData.vertices[vertexIndex] = new Vector3(topLeftX+x, heightCurve.Evaluate(heightmap[x, y])* heightMultiplier, topLeftZ - y);
+                    }
                     meshData.uvs[vertexIndex] = new Vector2(x/(float)width, y/(float)height);
                     if (x < width - 1 && y < height - 1)
                     {

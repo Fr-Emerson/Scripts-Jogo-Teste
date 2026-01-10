@@ -9,7 +9,7 @@ namespace Controller
     {
         [SerializeField] private InputActionAsset inputActionAsset;
         [SerializeField] private Transform cameraTransform;
-        [SerializeField] private float sensitivity = 10f;
+        // [SerializeField] private float sensitivity = 10f;
         
         private InputAction _lookAction;
 

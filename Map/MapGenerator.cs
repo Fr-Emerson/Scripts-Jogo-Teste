@@ -8,7 +8,8 @@ namespace Map
         public enum DrawMode
         {
             NoiseMap,
-            ColorMap
+            ColorMap,
+            Mesh
         }
         public DrawMode drawMode;
         public int mapWidth;
@@ -23,6 +24,7 @@ namespace Map
         public int seed;
         public Vector2 offset;
         
+        public float heightMultiplier;
         public bool autoUpdate;
         public TerrainType[] regions;
         public void GenerateMap()
@@ -53,6 +55,11 @@ namespace Map
              {
                  display.DrawnTexture(TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight));
              }
+             else if (drawMode == DrawMode.Mesh)
+             {
+                 display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap,heightMultiplier), TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight));
+             }
+             
         }
 
         private void OnValidate()
@@ -73,6 +80,11 @@ namespace Map
             if (octaves < 0)
             {
                 octaves = 0;
+            }
+
+            if (heightMultiplier < 1)
+            {
+                heightMultiplier = 1f;
             }
         }
     }

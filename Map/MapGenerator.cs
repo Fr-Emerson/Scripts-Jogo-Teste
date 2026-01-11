@@ -11,7 +11,8 @@ namespace Map
         {
             NoiseMap,
             ColorMap,
-            Mesh
+            Mesh,
+            FalloffMap
         }
         public DrawMode drawMode;
         public Noise.NormalizeMode normalizeMode;
@@ -27,14 +28,20 @@ namespace Map
         
         public int seed;
         public Vector2 offset;
+        public bool useFalloff;
         public float heightMultiplier;
         public AnimationCurve meshHeightCurve;
         public bool autoUpdate;
         public TerrainType[] regions;
-
+        float [,] falloffMap;
         Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
         Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
         #endregion
+
+        private void Awake()
+        {
+            falloffMap = FalloffGenerator.GenerateFalloffMap(MapChunkSize);
+        }
 
         private void Update()
         {
@@ -107,6 +114,10 @@ namespace Map
              {
                  for (int x = 0; x < MapChunkSize; x++)
                  {
+                     if (useFalloff)
+                     {
+                         noiseMap[x,y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                     }
                      float currentHeight = noiseMap[x, y];
                      for (int i = 0; i < regions.Length; i++)
                      {
@@ -136,15 +147,19 @@ namespace Map
             MapDisplay display = FindFirstObjectByType<MapDisplay>();
             if (drawMode == DrawMode.NoiseMap)
             {
-                display.DrawnTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
+                display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
             }
             else if (drawMode == DrawMode.ColorMap)
             {
-                display.DrawnTexture(TextureGenerator.TextureFromColourMap(colourMap, MapChunkSize, MapChunkSize));
+                display.DrawTexture(TextureGenerator.TextureFromColourMap(colourMap, MapChunkSize, MapChunkSize));
             }
             else if (drawMode == DrawMode.Mesh)
             {
                 display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap,heightMultiplier,meshHeightCurve, editorLevelOfDetailPreview), TextureGenerator.TextureFromColourMap(colourMap, MapChunkSize, MapChunkSize));
+            }
+            else if( drawMode == DrawMode.FalloffMap)
+            {
+                display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(MapChunkSize)));
             }
         }
         #endregion
@@ -164,6 +179,7 @@ namespace Map
             {
                 heightMultiplier = 1f;
             }
+            falloffMap = FalloffGenerator.GenerateFalloffMap(MapChunkSize);
         }
 
         struct MapThreadInfo<T>

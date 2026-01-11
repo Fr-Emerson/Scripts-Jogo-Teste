@@ -4,7 +4,7 @@ namespace Map
 {
     public static class MeshGenerator
     {
-        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail)
+        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
         {
             AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
             int simplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
@@ -17,14 +17,10 @@ namespace Map
             
             int verticesPerLine = (meshSize - 1) / simplificationIncrement + 1;
             
-            MeshData meshData = new MeshData(verticesPerLine);
+            MeshData meshData = new MeshData(verticesPerLine,useFlatShading);
             
-            int[][] vertexIndicesMap = new int[borderedSize][];
-            for (int index = 0; index < borderedSize; index++)
-            {
-                vertexIndicesMap[index] = new int[borderedSize];
-            }
-
+            int[,] vertexIndicesMap = new int[borderedSize,borderedSize];
+            
             int meshVertexIndex = 0;
             int borderVertexIndex = -1;
             for (int y = 0; y < borderedSize; y+= simplificationIncrement)
@@ -34,12 +30,12 @@ namespace Map
                     bool isBorderVertex = y == 0 || y == borderedSize - 1 || x == 0 || x == borderedSize - 1;
                     if (isBorderVertex)
                     {
-                        vertexIndicesMap[x][y] = borderVertexIndex;
+                        vertexIndicesMap[x,y] = borderVertexIndex;
                         borderVertexIndex--;
                     }
                     else
                     {
-                        vertexIndicesMap[x][y] = meshVertexIndex;
+                        vertexIndicesMap[x,y] = meshVertexIndex;
                         meshVertexIndex++;
                     }
                 }
@@ -49,26 +45,25 @@ namespace Map
             {
                 for (int x = 0; x < borderedSize; x+= simplificationIncrement)
                 {
-                    int vertexIndex = vertexIndicesMap[x][y];
+                    int vertexIndex = vertexIndicesMap[x,y];
                     Vector2 percent = new Vector2((x - simplificationIncrement)/(float)meshSize, (y-simplificationIncrement)/(float)meshSize);
                     float height  = heightCurve.Evaluate(heightmap[x, y]) * heightMultiplier;
                     Vector3 vertexPosition= new Vector3(topLeftX + percent.x * meshSizeUnsimplified, height, topLeftZ - percent.y * meshSizeUnsimplified);
                     meshData.AddVertex(vertexPosition, percent, vertexIndex);
-                    if (x < borderedSize - 1 && y < borderedSize - 1)
+                    if (x < borderedSize - simplificationIncrement && y < borderedSize - simplificationIncrement)
                     {
-                        int a = vertexIndicesMap[x][y];
-                        int b = vertexIndicesMap[x + simplificationIncrement][y];
-                        int c = vertexIndicesMap[x][y + simplificationIncrement];
-                        int d = vertexIndicesMap[x + simplificationIncrement][y + simplificationIncrement];
+                        int a = vertexIndicesMap[x,y];
+                        int b = vertexIndicesMap[x + simplificationIncrement,y];
+                        int c = vertexIndicesMap[x,y + simplificationIncrement];
+                        int d = vertexIndicesMap[x + simplificationIncrement,y + simplificationIncrement];
                         meshData.AddTriangle(a,d,c);
                         meshData.AddTriangle(d,a,b);
                     }
                     vertexIndex++;
                 }
             }
-            meshData.BakeNormals();
+            meshData.FinalizeMesh();
             return meshData;
-
         }
         
     }
@@ -85,9 +80,11 @@ namespace Map
         
         int triangleIndex;
         int borderTriangleIndex;
+        bool useFlatShading;
         
-        public MeshData(int verticesPerLine)
+        public MeshData(int verticesPerLine, bool useFlatShading = false)
         {
+            this.useFlatShading = useFlatShading;
             vertices = new Vector3[verticesPerLine * verticesPerLine];
             uvs = new Vector2[verticesPerLine * verticesPerLine];
             triangles = new int[(verticesPerLine - 1) * (verticesPerLine - 1) * 6];
@@ -122,6 +119,7 @@ namespace Map
                 triangles[triangleIndex+1] = c;
                 triangles[triangleIndex+2] = a;
                 triangleIndex += 3;
+            
             }
             
         }
@@ -172,12 +170,35 @@ namespace Map
             }
             return vertexNormals;
         }
-
-        public void BakeNormals()
+        public void FinalizeMesh()
+        {
+            if (useFlatShading)
+            {
+                FlatShading();
+            }
+            else
+            {
+                BakeNormals();
+            }
+        }
+        void BakeNormals()
         {
             bakedNormals = CalculateNormal();
         }
-
+        void FlatShading()
+        {
+            Vector3[] flatShadedVertices = new Vector3[triangles.Length];
+            Vector2[] flatShadedUvs = new Vector2[triangles.Length];
+            
+            for (int i = 0; i < triangles.Length; i++)
+            {
+                flatShadedVertices[i] = vertices[triangles[i]];
+                flatShadedUvs[i] = uvs[triangles[i]];
+                triangles[i] = i;
+            }
+            vertices = flatShadedVertices;
+            uvs = flatShadedUvs;
+        }
         
         Vector3 SurfaceNormalFromIndices(int indexA, int indexB, int indexC)
         {
@@ -195,8 +216,15 @@ namespace Map
             mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.uv = uvs;
-            mesh.normals = CalculateNormal();
-            mesh.RecalculateNormals();
+            if (useFlatShading)
+            {
+                mesh.RecalculateNormals();
+            }
+            else
+            {
+                mesh.normals = bakedNormals;
+            }
+
             return mesh;
         }
     }

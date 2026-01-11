@@ -6,6 +6,7 @@ namespace Map
 {
     public class EndlessTerrain : MonoBehaviour
     {
+        const float scale = 1f;
         const float viewerMoveThresholdForChunkUpdate = 25f;
         const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
         
@@ -21,7 +22,7 @@ namespace Map
         int _chunkSize;
         int _chunksVisibleInViewDistance;
         Dictionary<Vector2, TerrainChunk> _terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
-        List<TerrainChunk> _terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
+        static List<TerrainChunk> _terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
         private void Start()
         {
             MaxViewDistance = details[details.Length - 1].visibleDistanceThreshold;
@@ -33,7 +34,7 @@ namespace Map
 
         private void Update()
         {
-            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z);
+            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z) / scale;
             if ((_viewerPositionOld  - ViewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
             {
                 _viewerPositionOld = ViewerPosition;
@@ -60,10 +61,7 @@ namespace Map
                     if (_terrainChunkDictionary.ContainsKey(viewedChunkCoord))
                     {
                         _terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
-                        if (_terrainChunkDictionary[viewedChunkCoord].IsVisible())
-                        {
-                            _terrainChunksVisibleLastUpdate.Add(_terrainChunkDictionary[viewedChunkCoord]);
-                        }
+                        
                     }
                     else
                     {
@@ -104,8 +102,9 @@ namespace Map
                 meshFilter = meshObject.AddComponent<MeshFilter>();
                 meshRenderer.material = material;
                 
-                meshObject.transform.position = positionV3;
+                meshObject.transform.position = positionV3*scale;
                 meshObject.transform.parent = parent;
+                meshObject.transform.localScale = Vector3.one * scale;
                 SetVisible(false);
                 
                 lodMeshes = new LODMesh[details.Length];
@@ -166,6 +165,7 @@ namespace Map
                                 lodMesh.RequestMesh(mapData);
                             }
                         }
+                        _terrainChunksVisibleLastUpdate.Add(this);
                     }
 
                     SetVisible(visible);

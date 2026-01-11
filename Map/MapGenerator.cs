@@ -14,6 +14,7 @@ namespace Map
             Mesh
         }
         public DrawMode drawMode;
+        public Noise.NormalizeMode normalizeMode;
         public const int MapChunkSize = 241;
         [Range(0,6)]
         public int editorLevelOfDetailPreview;
@@ -100,7 +101,7 @@ namespace Map
        
         MapData GenerateMapData(Vector2 centre)
         {
-             float[,] noiseMap =  Noise.GeneratedNoiseMap(MapChunkSize, MapChunkSize, noiseScale,seed,octaves, persistence, lacunarity,centre + offset);
+             float[,] noiseMap =  Noise.GeneratedNoiseMap(MapChunkSize, MapChunkSize, noiseScale,seed,octaves, persistence, lacunarity,centre + offset, normalizeMode);
              Color[] colourMap = new Color[MapChunkSize * MapChunkSize];
              for (int y = 0; y < MapChunkSize; y++)
              {
@@ -109,10 +110,14 @@ namespace Map
                      float currentHeight = noiseMap[x, y];
                      for (int i = 0; i < regions.Length; i++)
                      {
-                         if (currentHeight<=regions[i].height)
+                         if (currentHeight>=regions[i].height)
                          {
                              colourMap[y * MapChunkSize + x] = regions[i].color;
+                         }
+                         else
+                         {
                              break;
+                             
                          }
                      }
                  }

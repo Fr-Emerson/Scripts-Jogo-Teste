@@ -6,7 +6,7 @@ namespace Map
 {
     public class EndlessTerrain : MonoBehaviour
     {
-        const float scale = 1f;
+        const float Scale = 2f;
         const float viewerMoveThresholdForChunkUpdate = 25f;
         const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
         
@@ -34,7 +34,7 @@ namespace Map
 
         private void Update()
         {
-            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z) / scale;
+            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z) / Scale;
             if ((_viewerPositionOld  - ViewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
             {
                 _viewerPositionOld = ViewerPosition;
@@ -86,9 +86,11 @@ namespace Map
             
             MeshRenderer meshRenderer;
             MeshFilter meshFilter;
+            MeshCollider meshCollider;
             
             LODInfo[] detailLevels;
             LODMesh[] lodMeshes;
+            LODMesh collisionLODMesh;
             
             public TerrainChunk(Vector2 coord, int size,LODInfo[] details,Transform parent, Material material )
             {
@@ -100,17 +102,23 @@ namespace Map
                 meshObject = new GameObject("Terrain Chunk"); 
                 meshRenderer = meshObject.AddComponent<MeshRenderer>();
                 meshFilter = meshObject.AddComponent<MeshFilter>();
+                meshCollider = meshObject.AddComponent<MeshCollider>();
+                
                 meshRenderer.material = material;
                 
-                meshObject.transform.position = positionV3*scale;
+                meshObject.transform.position = positionV3*Scale;
                 meshObject.transform.parent = parent;
-                meshObject.transform.localScale = Vector3.one * scale;
+                meshObject.transform.localScale = Vector3.one * Scale;
                 SetVisible(false);
                 
                 lodMeshes = new LODMesh[details.Length];
                 for (int i = 0; i < detailLevels.Length; i++)
                 {
                     lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
+                    if (detailLevels[i].useForCollider)
+                    {
+                        collisionLODMesh = lodMeshes[i];
+                    }
                 }
                 mapGenerator.RequestMapData(position,OnMapDataReceived);
             
@@ -157,12 +165,24 @@ namespace Map
                             LODMesh lodMesh = lodMeshes[lodIndex];
                             if (lodMesh.hasMesh)
                             {
-                                meshFilter.mesh = lodMesh.mesh;
                                 previousLODIndex = lodIndex;
+                                meshFilter.mesh = lodMesh.mesh;
+                                meshCollider.sharedMesh = lodMesh.mesh;
                             }
                             else if (!lodMesh.hasRequestedMesh)
                             {
                                 lodMesh.RequestMesh(mapData);
+                            }
+                        }
+
+                        if (lodIndex == 0)
+                        {
+                            if (collisionLODMesh.hasMesh)
+                            {
+                                meshCollider.sharedMesh = collisionLODMesh.mesh;
+                            }else if (!collisionLODMesh.hasRequestedMesh)
+                            {
+                                collisionLODMesh.RequestMesh(mapData);
                             }
                         }
                         _terrainChunksVisibleLastUpdate.Add(this);
@@ -223,6 +243,7 @@ namespace Map
         {
             public int lod;
             public float visibleDistanceThreshold;
+            public bool useForCollider;
         }
         
     }

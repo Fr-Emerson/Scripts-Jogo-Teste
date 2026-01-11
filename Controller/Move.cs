@@ -60,7 +60,7 @@ namespace Controller
             Vector2 move = _moveAction.ReadValue<Vector2>();
             bool hasInput = move.magnitude > 0.1f;
     
-            if (hasInput && IsGrounded())
+            if (hasInput)
             {
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, moveSpeed, acceleration * Time.deltaTime);
             }

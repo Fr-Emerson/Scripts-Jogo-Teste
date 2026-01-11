@@ -16,7 +16,7 @@ namespace Map
         }
         public DrawMode drawMode;
         public Noise.NormalizeMode normalizeMode;
-        public const int MapChunkSize = 241;
+        public const int MapChunkSize = 239;
         [Range(0,6)]
         public int editorLevelOfDetailPreview;
         public float noiseScale;
@@ -45,26 +45,23 @@ namespace Map
 
         private void Update()
         {
-            lock (_mapDataThreadInfoQueue)
+           
+            if (_mapDataThreadInfoQueue.Count > 0)
             {
-                if (_mapDataThreadInfoQueue.Count > 0)
+                for (int i = 0; i < _mapDataThreadInfoQueue.Count; i++)
                 {
-                    for (int i = 0; i < _mapDataThreadInfoQueue.Count; i++)
-                    {
-                        MapThreadInfo<MapData> threadInfo = _mapDataThreadInfoQueue.Dequeue();
-                        threadInfo.callback(threadInfo.parameter);
-                    }
-                }
-            }
-
-            lock (_meshDataThreadInfoQueue)
-            {
-                if (_meshDataThreadInfoQueue.Count > 0)
-                {
-                    MapThreadInfo<MeshData> threadInfo = _meshDataThreadInfoQueue.Dequeue();
+                    MapThreadInfo<MapData> threadInfo = _mapDataThreadInfoQueue.Dequeue();
                     threadInfo.callback(threadInfo.parameter);
                 }
             }
+            
+
+            if (_meshDataThreadInfoQueue.Count > 0)
+            {
+                MapThreadInfo<MeshData> threadInfo = _meshDataThreadInfoQueue.Dequeue();
+                threadInfo.callback(threadInfo.parameter);
+            }
+            
         }
 
         #region ||-- Mesh Data --||
@@ -108,7 +105,7 @@ namespace Map
        
         MapData GenerateMapData(Vector2 centre)
         {
-             float[,] noiseMap =  Noise.GeneratedNoiseMap(MapChunkSize, MapChunkSize, noiseScale,seed,octaves, persistence, lacunarity,centre + offset, normalizeMode);
+             float[,] noiseMap =  Noise.GeneratedNoiseMap(MapChunkSize + 2, MapChunkSize + 2, noiseScale,seed,octaves, persistence, lacunarity,centre + offset, normalizeMode);
              Color[] colourMap = new Color[MapChunkSize * MapChunkSize];
              for (int y = 0; y < MapChunkSize; y++)
              {

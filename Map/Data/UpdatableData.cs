@@ -8,17 +8,18 @@ namespace Map.Data
     {
         public event Action OnValuesUpdated;
         public bool autoUpdate = true;
-
+        
         protected virtual void OnValidate()
         {
             if (autoUpdate)
             {
-                NotifyOfUpdate();
+                UnityEditor.EditorApplication.update += NotifyOfUpdate;
             }
         }
 
         public void NotifyOfUpdate()
         {
+            UnityEditor.EditorApplication.update -= NotifyOfUpdate;
             if (OnValuesUpdated != null)
             {
                 OnValuesUpdated();

@@ -22,5 +22,9 @@ namespace Map.Data
             }
             base.OnValidate();
         }
+        
+        public float minHeight => uniformScale*heightMultiplier*meshHeightCurve.Evaluate(0);
+
+        public float maxHeight => uniformScale*heightMultiplier*meshHeightCurve.Evaluate(1);
     }
 }

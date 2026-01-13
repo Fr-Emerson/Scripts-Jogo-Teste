@@ -126,17 +126,19 @@ namespace Map
                  {
                      falloffMap = FalloffGenerator.GenerateFalloffMap(MapChunkSize + 2);
                  }
-                 for (int y = 0; y < MapChunkSize+2; y++)
+
+                 for (int y = 0; y < MapChunkSize + 2; y++)
                  {
-                     for (int x = 0; x < MapChunkSize+2; x++)
+                     for (int x = 0; x < MapChunkSize + 2; x++)
                      {
                          if (terrainData.useFalloff)
                          {
-                             noiseMap[x,y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                             noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
                          }
                      }
+                 }
              }
-             }
+             textureData.UpdateMeshHeights(terrainMaterial,terrainData.minHeight, terrainData.maxHeight);
 
              return new MapData(noiseMap);
         }

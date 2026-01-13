@@ -2,9 +2,12 @@
 
 namespace Map.Data
 {
-    [CreateAssetMenu(fileName = "FILENAME", menuName = "MENUNAME", order = 0)]
-    public class TextureData : ScriptableObject
+    [CreateAssetMenu]
+    public class TextureData : UpdatableData
     {
-        
+        public void ApplyMaterial(Material material)
+        {
+            
+        }
     }
 }

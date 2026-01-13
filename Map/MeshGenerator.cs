@@ -4,9 +4,9 @@ namespace Map
 {
     public static class MeshGenerator
     {
-        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
+        public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve newHeightCurve, int levelOfDetail, bool useFlatShading)
         {
-            AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
+            AnimationCurve heightCurve = new AnimationCurve(newHeightCurve.keys);
             int simplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
             int borderedSize = heightmap.GetLength(0);
             int meshSize = borderedSize - 2 * simplificationIncrement;

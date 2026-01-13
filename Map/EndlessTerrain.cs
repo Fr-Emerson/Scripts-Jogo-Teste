@@ -6,7 +6,7 @@ namespace Map
 {
     public class EndlessTerrain : MonoBehaviour
     {
-        const float Scale = 2f;
+      
         const float viewerMoveThresholdForChunkUpdate = 25f;
         const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
         
@@ -27,14 +27,14 @@ namespace Map
         {
             MaxViewDistance = details[details.Length - 1].visibleDistanceThreshold;
             mapGenerator = FindFirstObjectByType<MapGenerator>();
-            _chunkSize = MapGenerator.MapChunkSize - 1;
+            _chunkSize = mapGenerator.MapChunkSize - 1;
             _chunksVisibleInViewDistance = Mathf.RoundToInt(MaxViewDistance / _chunkSize);
             UpdateVisibleChunks();
         }
 
         private void Update()
         {
-            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z) / Scale;
+            ViewerPosition = new Vector2(viewer.position.x, viewer.position.z) / mapGenerator.terrainData.uniformScale;
             if ((_viewerPositionOld  - ViewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
             {
                 _viewerPositionOld = ViewerPosition;
@@ -106,9 +106,9 @@ namespace Map
                 
                 meshRenderer.material = material;
                 
-                meshObject.transform.position = positionV3*Scale;
+                meshObject.transform.position = positionV3 * mapGenerator.terrainData.uniformScale;
                 meshObject.transform.parent = parent;
-                meshObject.transform.localScale = Vector3.one * Scale;
+                meshObject.transform.localScale = Vector3.one * mapGenerator.terrainData.uniformScale;
                 SetVisible(false);
                 
                 lodMeshes = new LODMesh[details.Length];
@@ -128,16 +128,9 @@ namespace Map
                 Debug.Log("Received map data for chunk at " + position);
                 this.mapData = mapData;
                 mapDataReceived = true;
-                Texture2D texture = TextureGenerator.TextureFromColourMap(mapData.ColourMap, MapGenerator.MapChunkSize, MapGenerator.MapChunkSize);
-                meshRenderer.material.mainTexture = texture;
+                
                 UpdateTerrainChunk();
-                // mapGenerator.RequestMeshData(mapData,OnMeshDataReceived);
             }
-            // void OnMeshDataReceived(MeshData meshData)
-            // {
-            //     meshFilter.mesh = meshData.CreateMesh();
-            // }
-            
             
             public void UpdateTerrainChunk()
             {

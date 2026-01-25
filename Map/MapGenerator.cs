@@ -23,7 +23,12 @@ namespace Map
         public TextureData textureData;
         public Material terrainMaterial;
         
-        [Range(0,6)]
+        [Range(0,MeshGenerator.numSupportedChunkSizes-1)]
+        public int chunkSizeIndex;
+        [Range(0,MeshGenerator.numSupportedFlatShadedChunkSizes-1)]
+        public int flatShadedChunkSizeIndex;
+        
+        [Range(0,MeshGenerator.numSupportedLods-1)]
         public int editorLevelOfDetailPreview;
         
         public bool autoUpdate;
@@ -31,7 +36,13 @@ namespace Map
         Queue<MapThreadInfo<MapData>> _mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
         Queue<MapThreadInfo<MeshData>> _meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
         #endregion
-        
+
+        private void Awake()
+        {
+            textureData.ApplyMaterial(terrainMaterial);
+            textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+        }
+
         void OnValuesUpdated()
         {
             if (!Application.isPlaying)
@@ -49,11 +60,11 @@ namespace Map
             {
                 if (terrainData.useFlatShading)
                 {
-                    return 95;
+                    return MeshGenerator.SupportedFlatShadedChunkSizes[flatShadedChunkSizeIndex] - 1;
                 }
                 else
                 {
-                    return 239;
+                    return MeshGenerator.SupportedChunkSizes[chunkSizeIndex] - 1;
                 }
             }
         }
@@ -65,6 +76,10 @@ namespace Map
                 for (int i = 0; i < _mapDataThreadInfoQueue.Count; i++)
                 {
                     MapThreadInfo<MapData> threadInfo = _mapDataThreadInfoQueue.Dequeue();
+                    
+                    // Update material on main thread BEFORE calling callback
+                    textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+                    
                     threadInfo.callback(threadInfo.parameter);
                 }
             }
@@ -138,7 +153,9 @@ namespace Map
                      }
                  }
              }
-             textureData.UpdateMeshHeights(terrainMaterial,terrainData.minHeight, terrainData.maxHeight);
+             
+             // REMOVED: Material update from background thread
+             // textureData.UpdateMeshHeights(terrainMaterial,terrainData.minHeight, terrainData.maxHeight);
 
              return new MapData(noiseMap);
         }
@@ -149,6 +166,10 @@ namespace Map
         {
             MapData mapData = GenerateMapData(Vector2.zero);
             float[,] noiseMap = mapData.HeightMap;
+            
+            // Update material on main thread for editor
+            textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+            
             MapDisplay display = FindFirstObjectByType<MapDisplay>();
             if (drawMode == DrawMode.NoiseMap)
             {

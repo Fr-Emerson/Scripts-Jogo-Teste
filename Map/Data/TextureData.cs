@@ -10,7 +10,14 @@ namespace Map.Data
         private const int MaxColorLayers = 8;
 
         private readonly string[] _colorLayersNames = { "_color1", "_color2", "_color3", "_color4", "_color5", "_color6", "_color7", "_color8" };
-        private readonly string[] _baseHeightsNames = { "_baseHeight1", "_baseHeight2", "_baseHeight3", "_baseHeight4", "_baseHeight5", "_baseHeight6", "_baseHeight7", "_baseHeight8" };
+
+        private readonly string[] _baseHeightsNames =
+        {
+            "_baseHeight1", "_baseHeight2", "_baseHeight3", "_baseHeight4", "_baseHeight5", "_baseHeight6",
+            "_baseHeight7", "_baseHeight8"
+        };
+        private readonly string[] _baseBlends = {"_BaseBlend1", "_BaseBlend2", "_BaseBlend3", "_BaseBlend4", "_BaseBlend5", "_BaseBlend6",
+            "_BaseBlend7", "_BaseBlend8" };
 
         private float _savedMinHeight;
         private float _savedMaxHeight;
@@ -37,6 +44,7 @@ namespace Map.Data
             {
                 material.SetColor(_colorLayersNames[i], colorLayers[i].color);
                 material.SetFloat(_baseHeightsNames[i], colorLayers[i].baseStartHeight);
+                material.SetFloat(_baseBlends[i], colorLayers[i].baseBlend);
             }
         }
         
@@ -46,6 +54,7 @@ namespace Map.Data
             _savedMaxHeight = maxHeight;
             material.SetFloat("_minHeight", minHeight);
             material.SetFloat("_maxHeight", maxHeight);
+            
         }
     }
     
@@ -55,5 +64,6 @@ namespace Map.Data
         [Header("Color Layer")]
         public Color color;
         [Range(0, 1)] public float baseStartHeight;
+        [Range(0, 1)] public float baseBlend;
     }
 }

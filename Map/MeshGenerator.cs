@@ -4,9 +4,15 @@ namespace Map
 {
     public static class MeshGenerator
     {
+        public const int numSupportedLods = 5;
+        public const int numSupportedChunkSizes = 9;
+        public const int numSupportedFlatShadedChunkSizes = 3;
+        public static readonly int[] SupportedChunkSizes = { 48,72,96,120,144,168,192,216,240};
+        public static readonly int[] SupportedFlatShadedChunkSizes = { 48,72,96};
         public static MeshData GenerateTerrainMesh(float[,] heightmap,float heightMultiplier, AnimationCurve newHeightCurve, int levelOfDetail, bool useFlatShading)
         {
             AnimationCurve heightCurve = new AnimationCurve(newHeightCurve.keys);
+            
             int simplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
             int borderedSize = heightmap.GetLength(0);
             int meshSize = borderedSize - 2 * simplificationIncrement;
